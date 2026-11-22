@@ -1,0 +1,16 @@
+{
+  "name": "媒体",
+  "summary": "格式矩阵 + 本地/在线播放验证台",
+  "versionName": "1.0.0",
+  "category": "工具",
+  "description": "媒体能力验证应用：枚举系统支持的音视频格式，播放本地与网络媒体，记录解码器与时长/分辨率等关键指标，方便在板子上定位兼容性问题。",
+  "developer": "local",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Yuanyuan669/ohos-media",
+  "tags": ["媒体", "播放器", "格式验证"],
+  "deviceTypes": ["default", "tablet"],
+  "minAPIVersion": 11,
+  "targetAPIVersion": 11,
+  "publishedAt": "2026-11-22T15:30:00Z",
+  "releaseNotes": "首个商店版本：在本机 4.1 SDK 编译、自签，已在 LHT16 上安装验证。"
+}

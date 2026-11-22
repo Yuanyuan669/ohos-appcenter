@@ -1,0 +1,16 @@
+{
+  "name": "快传",
+  "summary": "局域网文件互传：手机开服务，电脑浏览器收发",
+  "versionName": "1.0.0",
+  "category": "工具",
+  "description": "应用内起一个 TCP 服务，PC 浏览器访问 http://<设备IP>:8080/?pin=xxxxxx 即可上传/下载文件。无需数据线，也不依赖云盘中转。",
+  "developer": "local",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Yuanyuan669/ohos-transfer",
+  "tags": ["文件传输", "局域网", "PIN"],
+  "deviceTypes": ["default", "tablet"],
+  "minAPIVersion": 10,
+  "targetAPIVersion": 10,
+  "publishedAt": "2026-11-22T15:30:00Z",
+  "releaseNotes": "首个商店版本：已自签并在 LHT16 上安装验证。"
+}

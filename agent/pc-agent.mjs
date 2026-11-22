@@ -126,7 +126,16 @@ async function processReady(name) {
   }
 
   const inst = await run(['install', '-r', localHap], { timeout: 180000 });
-  const parsed = parseInstallResult(inst.stdout + '\n' + inst.stderr, inst.code);
+  let parsed = parseInstallResult(inst.stdout + '\n' + inst.stderr, inst.code);
+  if (!parsed.ok && /9568332|sign info inconsistent/i.test(parsed.message)) {
+    // 设备上已有一个「签名不同」的同包名版本（比如之前用调试证书装过）。
+    // -r 要求签名一致，只能先卸再装。
+    warn(`设备上的 ${meta.bundleName} 签名与本包不一致，先卸载再装`);
+    const un = await run(['uninstall', meta.bundleName], { timeout: 120000 });
+    if (un.code !== 0) warn(`卸载失败：${un.stderr.trim() || un.stdout.trim()}`);
+    const again = await run(['install', '-r', localHap], { timeout: 180000 });
+    parsed = parseInstallResult(again.stdout + '\n' + again.stderr, again.code);
+  }
   if (!parsed.ok) {
     warn(`安装失败：${parsed.message}`);
     await writeResult(name, buildResult({ meta, status: 'failed', message: `install_failed: ${parsed.message}` }));

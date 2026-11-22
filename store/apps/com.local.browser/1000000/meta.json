@@ -1,0 +1,16 @@
+{
+  "name": "浏览器",
+  "summary": "轻量 Web 容器：地址栏、前进后退、刷新",
+  "versionName": "1.0.0",
+  "category": "工具",
+  "description": "基于 ArkWeb 的极简浏览器，带地址栏与导航控制，适合把信息屏、内网面板之类的网页直接放到板子上看。",
+  "developer": "local",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Yuanyuan669/ohos-browser",
+  "tags": ["浏览器", "WebView", "内网"],
+  "deviceTypes": ["default", "tablet"],
+  "minAPIVersion": 11,
+  "targetAPIVersion": 11,
+  "publishedAt": "2026-11-22T15:30:00Z",
+  "releaseNotes": "首个商店版本：已自签并在 LHT16 上安装验证。"
+}

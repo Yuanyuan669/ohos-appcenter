@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-22T14:57:57.681Z",
+  "generatedAt": "2026-11-22T15:32:09.132Z",
   "channel": "stable",
   "minAppVersionCode": 1,
-  "baseUrl": "",
+  "baseUrl": "http://192.168.31.100:8787",
   "mirrors": [
     {
       "id": "direct",
@@ -11,5 +11,258 @@
       "template": ""
     }
   ],
-  "apps": []
+  "apps": [
+    {
+      "bundleName": "com.local.browser",
+      "name": "浏览器",
+      "summary": "轻量 Web 容器：地址栏、前进后退、刷新",
+      "description": "基于 ArkWeb 的极简浏览器，带地址栏与导航控制，适合把信息屏、内网面板之类的网页直接放到板子上看。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/ohos-browser",
+      "category": "工具",
+      "tags": [
+        "浏览器",
+        "WebView",
+        "内网"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "1.0.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 11,
+        "targetAPIVersion": 11,
+        "sizeBytes": 1170354,
+        "sha256": "6048245234c79edddfaf7add06e66ed54f9aed21a76f39101f83ff565b044401",
+        "hap": "apps/com.local.browser/1000000/browser-1.0.0.hap",
+        "publishedAt": "2026-11-22T15:30:00Z",
+        "releaseNotes": "首个商店版本：已自签并在 LHT16 上安装验证。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "1.0.0",
+          "versionCode": 1000000,
+          "sizeBytes": 1170354,
+          "sha256": "6048245234c79edddfaf7add06e66ed54f9aed21a76f39101f83ff565b044401",
+          "hap": "apps/com.local.browser/1000000/browser-1.0.0.hap",
+          "publishedAt": "2026-11-22T15:30:00Z"
+        }
+      ],
+      "revoked": false
+    },
+    {
+      "bundleName": "com.local.homeime",
+      "name": "沐界输入法",
+      "summary": "中文拼音输入法：ArkUI 界面 + NAPI 拼音引擎",
+      "description": "面向 OpenHarmony 的中文拼音输入法，界面用 ArkTS/ArkUI，候选与词库由 C++ 拼音引擎通过 NAPI 提供。当前为早期版本，适合在开发板上试用与反馈。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/ohos-homeime",
+      "category": "工具",
+      "tags": [
+        "输入法",
+        "拼音",
+        "NAPI"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "0.1.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 11,
+        "targetAPIVersion": 11,
+        "sizeBytes": 4856381,
+        "sha256": "21046fcabdd8f1ee1e54b5c4b0837b3ba534a0f319f74fb029cfb85d23c66edf",
+        "hap": "apps/com.local.homeime/1000000/homeime-0.1.0.hap",
+        "publishedAt": "2026-11-22T15:30:00Z",
+        "releaseNotes": "0.1.0：首个可安装版本，已自签并在 LHT16 上安装验证。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "0.1.0",
+          "versionCode": 1000000,
+          "sizeBytes": 4856381,
+          "sha256": "21046fcabdd8f1ee1e54b5c4b0837b3ba534a0f319f74fb029cfb85d23c66edf",
+          "hap": "apps/com.local.homeime/1000000/homeime-0.1.0.hap",
+          "publishedAt": "2026-11-22T15:30:00Z"
+        }
+      ],
+      "revoked": false
+    },
+    {
+      "bundleName": "com.local.homekiosk",
+      "name": "HomeKiosk",
+      "summary": "家庭信息屏：时钟、天气、自选股、待办、照片墙",
+      "description": "常驻横屏信息屏。聚合本机照片、Open-Meteo 天气、行情摘要与待办；支持自定义 JSON 信息源，全部数据本地缓存，断网时用上次快照。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/ohos-kiosk",
+      "category": "工具",
+      "tags": [
+        "信息屏",
+        "横屏",
+        "常驻"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "1.0.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 10,
+        "targetAPIVersion": 10,
+        "sizeBytes": 1368630,
+        "sha256": "82ec39a5d6f2f63eba2388fecedc1634c70662c3c343e7fb4977bf762201cf08",
+        "hap": "apps/com.local.homekiosk/1000000/homekiosk-1.0.0.hap",
+        "publishedAt": "2026-11-22T15:20:00Z",
+        "releaseNotes": "首个入选商店的版本：本机自签并已在 LHT16 上验证启动与渲染。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "1.0.0",
+          "versionCode": 1000000,
+          "sizeBytes": 1368630,
+          "sha256": "82ec39a5d6f2f63eba2388fecedc1634c70662c3c343e7fb4977bf762201cf08",
+          "hap": "apps/com.local.homekiosk/1000000/homekiosk-1.0.0.hap",
+          "publishedAt": "2026-11-22T15:20:00Z"
+        }
+      ],
+      "revoked": false
+    },
+    {
+      "bundleName": "com.local.media",
+      "name": "媒体",
+      "summary": "格式矩阵 + 本地/在线播放验证台",
+      "description": "媒体能力验证应用：枚举系统支持的音视频格式，播放本地与网络媒体，记录解码器与时长/分辨率等关键指标，方便在板子上定位兼容性问题。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/ohos-media",
+      "category": "工具",
+      "tags": [
+        "媒体",
+        "播放器",
+        "格式验证"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "1.0.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 11,
+        "targetAPIVersion": 11,
+        "sizeBytes": 3444800,
+        "sha256": "130795879c456a7efb62e14f061bf0a13202ec3c43346b305418ce1cba81ce25",
+        "hap": "apps/com.local.media/1000000/media-1.0.0.hap",
+        "publishedAt": "2026-11-22T15:30:00Z",
+        "releaseNotes": "首个商店版本：在本机 4.1 SDK 编译、自签，已在 LHT16 上安装验证。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "1.0.0",
+          "versionCode": 1000000,
+          "sizeBytes": 3444800,
+          "sha256": "130795879c456a7efb62e14f061bf0a13202ec3c43346b305418ce1cba81ce25",
+          "hap": "apps/com.local.media/1000000/media-1.0.0.hap",
+          "publishedAt": "2026-11-22T15:30:00Z"
+        }
+      ],
+      "revoked": false
+    },
+    {
+      "bundleName": "com.local.music",
+      "name": "网易云音乐",
+      "summary": "网易云网页播放器 + 本地媒体库播放",
+      "description": "OpenHarmony 音乐应用：在线加载网易云音乐网页播放器（移动 UA，Cookie/DOM 持久化，拦截 orpheus:// 等 App scheme），同时支持本地媒体库播放，底部有后退/前进/刷新/首页/搜索控制。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/OhMusic",
+      "category": "娱乐",
+      "tags": [
+        "音乐",
+        "WebView",
+        "本地播放"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "0.2.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 11,
+        "targetAPIVersion": 11,
+        "sizeBytes": 163632,
+        "sha256": "13000575b3986dec5f68e1e44a71aef3d6f7c00d554688c42897f6d7ad948665",
+        "hap": "apps/com.local.music/1000000/music-0.2.0.hap",
+        "publishedAt": "2026-11-22T15:30:00Z",
+        "releaseNotes": "0.2.0：模块名 web，已自签并在 LHT16 上安装验证。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "0.2.0",
+          "versionCode": 1000000,
+          "sizeBytes": 163632,
+          "sha256": "13000575b3986dec5f68e1e44a71aef3d6f7c00d554688c42897f6d7ad948665",
+          "hap": "apps/com.local.music/1000000/music-0.2.0.hap",
+          "publishedAt": "2026-11-22T15:30:00Z"
+        }
+      ],
+      "revoked": false
+    },
+    {
+      "bundleName": "com.local.transfer",
+      "name": "快传",
+      "summary": "局域网文件互传：手机开服务，电脑浏览器收发",
+      "description": "应用内起一个 TCP 服务，PC 浏览器访问 http://<设备IP>:8080/?pin=xxxxxx 即可上传/下载文件。无需数据线，也不依赖云盘中转。",
+      "developer": "local",
+      "license": "Apache-2.0",
+      "source": "https://github.com/Yuanyuan669/ohos-transfer",
+      "category": "工具",
+      "tags": [
+        "文件传输",
+        "局域网",
+        "PIN"
+      ],
+      "deviceTypes": [
+        "default",
+        "tablet"
+      ],
+      "latest": {
+        "versionName": "1.0.0",
+        "versionCode": 1000000,
+        "minAPIVersion": 10,
+        "targetAPIVersion": 10,
+        "sizeBytes": 1025260,
+        "sha256": "232a022dcee17cfaca3ce39b7d1b93a5c50434f6c2c605b69102a2c3a4930c33",
+        "hap": "apps/com.local.transfer/1000000/transfer-1.0.0.hap",
+        "publishedAt": "2026-11-22T15:30:00Z",
+        "releaseNotes": "首个商店版本：已自签并在 LHT16 上安装验证。",
+        "installMode": "hdc"
+      },
+      "versions": [
+        {
+          "versionName": "1.0.0",
+          "versionCode": 1000000,
+          "sizeBytes": 1025260,
+          "sha256": "232a022dcee17cfaca3ce39b7d1b93a5c50434f6c2c605b69102a2c3a4930c33",
+          "hap": "apps/com.local.transfer/1000000/transfer-1.0.0.hap",
+          "publishedAt": "2026-11-22T15:30:00Z"
+        }
+      ],
+      "revoked": false
+    }
+  ]
 }

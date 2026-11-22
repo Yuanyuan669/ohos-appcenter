@@ -52,7 +52,7 @@ export class StoreClient {
     if (index.baseUrl && index.baseUrl.length > 0) {
       base = index.baseUrl;
     } else {
-      base = settings.indexUrl.replace(/\/[^\/]*$/, '');
+      base = dirOf(settings.indexUrl);
     }
     return StoreClient.withPin(trimSlash(base) + '/' + hapRel, settings.pin);
   }
@@ -76,4 +76,19 @@ function trimSlash(s: string): string {
     out = out.substring(0, out.length - 1);
   }
   return out;
+}
+
+/** ArkTS (API 10) 不允许正则字面量，这里手写去掉最后一段路径。 */
+function dirOf(url: string): string {
+  let s = url;
+  const q = s.indexOf('?');
+  if (q >= 0) {
+    s = s.substring(0, q);
+  }
+  const h = s.indexOf('#');
+  if (h >= 0) {
+    s = s.substring(0, h);
+  }
+  const i = s.lastIndexOf('/');
+  return i > 0 ? s.substring(0, i) : s;
 }

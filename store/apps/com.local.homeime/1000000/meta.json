@@ -1,0 +1,16 @@
+{
+  "name": "沐界输入法",
+  "summary": "中文拼音输入法：ArkUI 界面 + NAPI 拼音引擎",
+  "versionName": "0.1.0",
+  "category": "工具",
+  "description": "面向 OpenHarmony 的中文拼音输入法，界面用 ArkTS/ArkUI，候选与词库由 C++ 拼音引擎通过 NAPI 提供。当前为早期版本，适合在开发板上试用与反馈。",
+  "developer": "local",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Yuanyuan669/ohos-homeime",
+  "tags": ["输入法", "拼音", "NAPI"],
+  "deviceTypes": ["default", "tablet"],
+  "minAPIVersion": 11,
+  "targetAPIVersion": 11,
+  "publishedAt": "2026-11-22T15:30:00Z",
+  "releaseNotes": "0.1.0：首个可安装版本，已自签并在 LHT16 上安装验证。"
+}

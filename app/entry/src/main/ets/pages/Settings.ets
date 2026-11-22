@@ -25,7 +25,7 @@ struct SettingsPage {
   aboutToAppear(): void {
     this.ctx = getContext(this) as common.UIAbilityContext;
     this.sandboxPath = ReadyQueue.baseDir(this.ctx);
-    SettingsStore.load(this.ctx).then((s: StoreSettings) => {
+    SettingsStore.loadEffective(this.ctx).then((s: StoreSettings) => {
       this.indexUrl = s.indexUrl;
       this.pin = s.pin;
     }).catch((e: Error) => {

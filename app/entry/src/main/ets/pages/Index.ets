@@ -25,7 +25,7 @@ struct Index {
   @State loading: boolean = false;
   @State errorText: string = '';
   @State states: CardState[] = [];
-  private settings: StoreSettings = { indexUrl: '', pin: '' };
+  @State settings: StoreSettings = { indexUrl: '', pin: '' };
   private index: StoreIndex | null = null;
   private ctx: common.UIAbilityContext | null = null;
 
@@ -42,7 +42,7 @@ struct Index {
     this.loading = true;
     this.errorText = '';
     try {
-      this.settings = await SettingsStore.load(ctx);
+      this.settings = await SettingsStore.loadEffective(ctx);
       const index: StoreIndex = await StoreClient.fetchIndex(this.settings);
       this.index = index;
       this.apps = index.apps;
@@ -98,7 +98,7 @@ struct Index {
         this.updateState(app.bundleName, 'failed', 'SHA256 不符，已丢弃');
         return;
       }
-      const requestId = app.bundleName + '-' + latest.versionCode + '-' + nowId();
+      const requestId = requestIdFor(app.bundleName, latest.versionCode);
       const req: ReadyRequest = {
         id: requestId,
         bundleName: app.bundleName,
@@ -231,4 +231,20 @@ function phaseText(phase: string): string {
 
 function nowId(): string {
   return String(Date.now());
+}
+
+/**
+ * ready 请求 ID。agent 侧校验规则是 ^[a-zA-Z0-9_-]{8,64}$（不含点），
+ * 所以把 bundleName 里的点和其它非法字符换成 '-'，例如
+ *   com.local.homekiosk + 1000000 -> com-local-homekiosk-1000000-1795361236627
+ */
+function requestIdFor(bundleName: string, versionCode: number): string {
+  let safe = '';
+  for (let i = 0; i < bundleName.length; i++) {
+    const c = bundleName.charAt(i);
+    const ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+      || (c >= '0' && c <= '9') || c === '_' || c === '-';
+    safe += ok ? c : '-';
+  }
+  return safe + '-' + versionCode + '-' + nowId();
 }

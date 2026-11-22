@@ -1,6 +1,8 @@
 import common from '@ohos.app.ability.common';
 import preferences from '@ohos.data.preferences';
+import fs from '@ohos.file.fs';
 import { StoreSettings } from '../model/Types';
+import { Log } from './Logger';
 
 const NAME = 'appcenter_settings';
 const KEY_URL = 'index_url';
@@ -25,6 +27,43 @@ export class SettingsStore {
     const url = await store.get(KEY_URL, '') as string;
     const pin = await store.get(KEY_PIN, '') as string;
     return { indexUrl: url, pin: pin };
+  }
+
+  /**
+   * 先读 preferences；为空则尝试预置文件并回写。
+   * 预置文件：<filesDir>/appcenter/index-url.txt
+   * 第一行 URL，第二行（可选）PIN。批量部署不用在板上手输地址。
+   */
+  static async loadEffective(context: common.UIAbilityContext): Promise<StoreSettings> {
+    const saved: StoreSettings = await SettingsStore.load(context);
+    if (saved.indexUrl.length > 0) {
+      return saved;
+    }
+    const path: string = context.filesDir + '/appcenter/index-url.txt';
+    if (!fs.accessSync(path)) {
+      return saved;
+    }
+    let text: string = '';
+    try {
+      text = fs.readTextSync(path);
+    } catch (e) {
+      Log.warn('bootstrap url unreadable: ' + JSON.stringify(e));
+      return saved;
+    }
+    const lines: string[] = text.split('\n');
+    const url: string = lines.length > 0 ? lines[0].trim() : '';
+    const pin: string = lines.length > 1 ? lines[1].trim() : '';
+    if (url.length === 0) {
+      return saved;
+    }
+    const boot: StoreSettings = { indexUrl: url, pin: pin };
+    try {
+      await SettingsStore.save(context, boot);
+      Log.info('bootstrap url applied: ' + url);
+    } catch (e) {
+      Log.warn('bootstrap save failed: ' + JSON.stringify(e));
+    }
+    return boot;
   }
 
   static async save(context: common.UIAbilityContext, settings: StoreSettings): Promise<void> {

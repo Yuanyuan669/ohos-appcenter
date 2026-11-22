@@ -1,0 +1,16 @@
+{
+  "name": "网易云音乐",
+  "summary": "网易云网页播放器 + 本地媒体库播放",
+  "versionName": "0.2.0",
+  "category": "娱乐",
+  "description": "OpenHarmony 音乐应用：在线加载网易云音乐网页播放器（移动 UA，Cookie/DOM 持久化，拦截 orpheus:// 等 App scheme），同时支持本地媒体库播放，底部有后退/前进/刷新/首页/搜索控制。",
+  "developer": "local",
+  "license": "Apache-2.0",
+  "source": "https://github.com/Yuanyuan669/OhMusic",
+  "tags": ["音乐", "WebView", "本地播放"],
+  "deviceTypes": ["default", "tablet"],
+  "minAPIVersion": 11,
+  "targetAPIVersion": 11,
+  "publishedAt": "2026-11-22T15:30:00Z",
+  "releaseNotes": "0.2.0：模块名 web，已自签并在 LHT16 上安装验证。"
+}

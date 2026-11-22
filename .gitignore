@@ -1,5 +1,6 @@
 # 构建产物
 app/build/
+app/entry/build/
 app/.hvigor/
 app/oh_modules/
 app/local.properties
@@ -16,3 +17,12 @@ app/signing/*.p7b
 .DS_Store
 Thumbs.db
 *.log
+# 签名材料（只在本机生成，不入库）
+/signing/*.p12
+/signing/*.cer
+/signing/*.p7b
+/signing/*.json
+
+# 构建产物
+/build-artifacts/
+/scripts/env.local.sh
