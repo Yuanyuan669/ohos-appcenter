@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-22T15:32:09.132Z",
+  "generatedAt": "2026-11-22T15:38:07.956Z",
   "channel": "stable",
   "minAppVersionCode": 1,
   "baseUrl": "http://192.168.31.100:8787",
@@ -203,8 +203,8 @@
         "versionCode": 1000000,
         "minAPIVersion": 11,
         "targetAPIVersion": 11,
-        "sizeBytes": 163632,
-        "sha256": "13000575b3986dec5f68e1e44a71aef3d6f7c00d554688c42897f6d7ad948665",
+        "sizeBytes": 163300,
+        "sha256": "b91b14851fc51fba12d7a8b296e812b77a186f787beaeed10f1c08e8fa8b54ef",
         "hap": "apps/com.local.music/1000000/music-0.2.0.hap",
         "publishedAt": "2026-11-22T15:30:00Z",
         "releaseNotes": "0.2.0：模块名 web，已自签并在 LHT16 上安装验证。",
@@ -214,8 +214,8 @@
         {
           "versionName": "0.2.0",
           "versionCode": 1000000,
-          "sizeBytes": 163632,
-          "sha256": "13000575b3986dec5f68e1e44a71aef3d6f7c00d554688c42897f6d7ad948665",
+          "sizeBytes": 163300,
+          "sha256": "b91b14851fc51fba12d7a8b296e812b77a186f787beaeed10f1c08e8fa8b54ef",
           "hap": "apps/com.local.music/1000000/music-0.2.0.hap",
           "publishedAt": "2026-11-22T15:30:00Z"
         }
