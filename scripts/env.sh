@@ -64,6 +64,18 @@ export OHOS_PROFILE="${OHOS_PROFILE:-$OHOS_SIGN_DIR/appcenter-profile.p7b}"
 export OHOS_STORE_PWD="${OHOS_STORE_PWD:-123456}"
 export OHOS_KEY_PWD="${OHOS_KEY_PWD:-123456}"
 
+# --- Privilege (profile fields) ---------------------------------------------
+# The store installs HAPs on-device, which needs ohos.permission.INSTALL_BUNDLE
+# (availableLevel = system_core). A normal-APL profile can never be granted it,
+# so the store itself is signed as a system app; the OpenHarmony test PKI ships
+# the keys, and the device accepts it (verified on 4.1.7.5).
+#
+# OHOS_APL=normal builds the fallback variant: install attempts return 201 and
+# the app hands downloaded HAPs to agent/pc-agent.mjs instead.
+export OHOS_APL="${OHOS_APL:-system_core}"
+export OHOS_APP_FEATURE="${OHOS_APP_FEATURE:-hos_system_app}"
+export OHOS_ALLOWED_ACLS="${OHOS_ALLOWED_ACLS:-ohos.permission.INSTALL_BUNDLE}"
+
 # --- Output -----------------------------------------------------------------
 export OHOS_OUT_DIR="${OHOS_OUT_DIR:-$OHOS_PROJECT_ROOT/build-artifacts}"
 export OHOS_UNSIGNED_HAP="${OHOS_UNSIGNED_HAP:-$OHOS_OUT_DIR/entry-unsigned.hap}"

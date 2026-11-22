@@ -45,10 +45,10 @@ hdc_run() {
 require_device() {
   [ -n "$HDC_BIN" ] || fail "找不到 hdc（$OHOS_SDK_TOOLCHAINS/hdc.exe）"
   local targets
-  targets="$(hdc_run list targets 2>/dev/null | tr -d '\r' | grep -v '[Empty]' || true)"
+  targets="$(hdc_run list targets 2>/dev/null | tr -d '\r' | grep -v '[Empty]' | awk 'NF' || true)"
   if [ -z "$OHOS_TARGET" ]; then
     [ -n "$targets" ] || fail "没有检测到设备。插 USB 或 export OHOS_TARGET=<serial|IP:PORT>"
-    echo "$targets" | head -1 | grep -qx . && OHOS_TARGET="$(echo "$targets" | head -1)"
+    OHOS_TARGET="$(echo "$targets" | head -1)"
     ok "device: $OHOS_TARGET"
   else
     echo "$targets" | grep -qx "$OHOS_TARGET" \

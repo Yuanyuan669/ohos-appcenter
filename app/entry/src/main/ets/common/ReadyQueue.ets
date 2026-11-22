@@ -81,7 +81,9 @@ export class ReadyQueue {
           break;
         }
         const slice = buffer.slice(0, readLen);
-        md.update({ data: new Uint8Array(slice) });
+        // update() 返回 Promise，必须 await：否则所有分块并发提交，
+        // digest 会先于数据落地，算出的哈希是错的（大文件才会暴露）。
+        await md.update({ data: new Uint8Array(slice) });
       }
     } finally {
       fs.closeSync(file);

@@ -37,6 +37,12 @@
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERNET"
+      },
+      {
+        // 静默安装权限（level=system_core）。只有以 system_core 身份签名的包才能
+        // 拿到它，见 scripts/make-signing-material.sh 里的 OHOS_APL/OHOS_ALLOWED_ACLS。
+        "name": "ohos.permission.INSTALL_BUNDLE",
+        "reason": "$string:reason_install_bundle"
       }
     ]
   }

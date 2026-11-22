@@ -117,7 +117,7 @@ store/
 | `apps[].revoked` | 是 | 停用标记；当前生成器恒为 `false`，设备端未实现拦截。 |
 | `latest.sha256` | 是 | 64 位小写十六进制。设备下载后必须比对，不符即丢弃。 |
 | `latest.hap` | 是 | 相对路径，仅 `.hap`。 |
-| `latest.installMode` | 是 | 目前只有 `hdc`：设备端不安装，由 PC agent 执行。 |
+| `latest.installMode` | 是 | 安装方式提示：`device` = 设备端静默安装；`hdc` = 交给 PC agent（normal 兜底链）。当前生成器写 `device`。 |
 
 ## 4. 校验规则（`validate-index.mjs` 实际执行）
 

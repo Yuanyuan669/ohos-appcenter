@@ -11,6 +11,10 @@
     {
       "name": "EntryAbility_label",
       "value": "应用中心"
+    },
+    {
+      "name": "reason_install_bundle",
+      "value": "从应用中心下载后在本机安装应用"
     }
   ]
 }

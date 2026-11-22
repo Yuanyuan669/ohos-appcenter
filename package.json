@@ -8,6 +8,7 @@
     "test": "node --test",
     "build:index": "node tools/build-index.mjs --store store",
     "validate": "node tools/validate-index.mjs --store store",
+    "verify:haps": "bash tools/verify-store-haps.sh",
     "serve": "node tools/serve.mjs --store store --port 8787",
     "agent": "node agent/pc-agent.mjs --once",
     "agent:watch": "node agent/pc-agent.mjs --interval 5"

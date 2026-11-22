@@ -1,22 +1,27 @@
 import common from '@ohos.app.ability.common';
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
-import { AppEntry, ReadyRequest, StoreIndex, StoreSettings } from '../model/Types';
+import { AppEntry, LatestInfo, ReadyRequest, StoreIndex, StoreSettings } from '../model/Types';
 import { SettingsStore } from '../common/SettingsStore';
 import { StoreClient, StoreError } from '../common/StoreClient';
 import { ReadyQueue, hapFileName } from '../common/ReadyQueue';
+import { PrivilegedInstaller, ERR_NO_PERMISSION } from '../common/PrivilegedInstaller';
 
 interface CardState {
   bundleName: string;
-  phase: string; // idle | downloading | ready | installed | failed
+  phase: string; // idle | downloading | installing | ready | installed | failed
   detail: string;
 }
 
 /**
- * 首页：商店列表 + 下载 + 入队。
+ * 首页：商店列表 + 下载 + 安装。
  *
- * 边界（务必在 UI 里说清楚）：普通应用无法安装任意 HAP，下载完成后只能把
- * HAP 放进沙箱 ready/，由 PC 侧 `agent/pc-agent.mjs` 执行 hdc install。
+ * 商店以 system_core 身份签名（scripts/make-signing-material.sh 的
+ * OHOS_APL/OHOS_ALLOWED_ACLS），拿到 ohos.permission.INSTALL_BUNDLE 后
+ * 下载完成即在本机静默安装，和普通应用商店一致。
+ *
+ * 只有用 normal 身份构建时才会走到 ready/ + PC agent 的兜底路径——那是
+ * 权限不够时的退路，不是默认路径。
  */
 @Entry
 @Component
@@ -98,24 +103,46 @@ struct Index {
         this.updateState(app.bundleName, 'failed', 'SHA256 不符，已丢弃');
         return;
       }
-      const requestId = requestIdFor(app.bundleName, latest.versionCode);
-      const req: ReadyRequest = {
-        id: requestId,
-        bundleName: app.bundleName,
-        versionCode: latest.versionCode,
-        versionName: latest.versionName,
-        hap: cacheName,
-        sizeBytes: latest.sizeBytes,
-        sha256: latest.sha256,
-        requestedAt: new Date().toISOString()
-      };
-      ReadyQueue.enqueue(ctx, req, local);
-      this.updateState(app.bundleName, 'ready', '已就绪，等待电脑侧 agent 安装');
-      promptAction.showToast({ message: '已下载，电脑上运行 agent 即会安装' });
+
+      this.updateState(app.bundleName, 'installing', '安装中…');
+      const attempt = await PrivilegedInstaller.install(local, app.bundleName);
+      if (attempt.ok) {
+        this.updateState(app.bundleName, 'installed',
+          attempt.message === 'reinstalled'
+            ? '签名不一致，已卸载旧版并重装 v' + latest.versionName
+            : '已安装 v' + latest.versionName);
+        promptAction.showToast({ message: app.name + ' 安装成功' });
+        return;
+      }
+      if (attempt.code === ERR_NO_PERMISSION) {
+        // 当前包是 normal 身份（没有 INSTALL_BUNDLE），退回到 ready/ + PC agent。
+        this.enqueueForAgent(ctx, app, cacheName, latest, local);
+        return;
+      }
+      this.updateState(app.bundleName, 'failed', '安装失败：' + attempt.message);
     } catch (e) {
       const err = e as Error;
       this.updateState(app.bundleName, 'failed', err.message);
     }
+  }
+
+  /** 兜底：没有静默安装权限时，把 HAP 放进 ready/ 交给 PC agent。 */
+  private enqueueForAgent(ctx: common.UIAbilityContext, app: AppEntry, cacheName: string,
+                          latest: LatestInfo, local: string): void {
+    const requestId = requestIdFor(app.bundleName, latest.versionCode);
+    const req: ReadyRequest = {
+      id: requestId,
+      bundleName: app.bundleName,
+      versionCode: latest.versionCode,
+      versionName: latest.versionName,
+      hap: cacheName,
+      sizeBytes: latest.sizeBytes,
+      sha256: latest.sha256,
+      requestedAt: new Date().toISOString()
+    };
+    ReadyQueue.enqueue(ctx, req, local);
+    this.updateState(app.bundleName, 'ready', '已就绪，等待电脑侧 agent 安装');
+    promptAction.showToast({ message: '已下载，电脑上运行 agent 即会安装' });
   }
 
   @Builder
@@ -216,6 +243,9 @@ function sizeText(bytes: number): string {
 function phaseText(phase: string): string {
   if (phase === 'downloading') {
     return '下载中';
+  }
+  if (phase === 'installing') {
+    return '安装中';
   }
   if (phase === 'ready') {
     return '待安装';

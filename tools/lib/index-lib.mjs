@@ -116,7 +116,7 @@ export async function buildIndex(appsDir, opts = {}) {
         hap: latest.hapRel,
         publishedAt: meta.publishedAt ?? null,
         releaseNotes: meta.releaseNotes ?? '',
-        installMode: 'hdc',
+        installMode: 'device',
       },
       versions: versions.map((v) => ({
         versionName: v.meta.versionName,

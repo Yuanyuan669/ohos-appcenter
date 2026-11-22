@@ -79,7 +79,7 @@ sig generate-app-cert -keyAlias "$APP_ALIAS" -keyPwd "$APP_PWD" \
 [ -f appcenter-app.cer ] || fail "没有生成 appcenter-app.cer"
 ok "chain 有 $(grep -c 'BEGIN CERT' appcenter-app.cer) 张证书（leaf -> sub-CA -> root）"
 
-step "4/5 写 Profile：bundle-name=$BUNDLE"
+step "4/5 写 Profile：bundle-name=$BUNDLE  apl=${OHOS_APL:-system_core}"
 # cert 1 of the chain is the leaf; the profile must name exactly that one.
 awk 'BEGIN{n=0} /BEGIN CERT/{n++} n==1{print > "app-leaf.pem"}' appcenter-app.cer
 "$OHOS_NODE" - "$SDK_PROF" "$BUNDLE" <<'NODE' || fail "node 生成 profile 失败"
@@ -88,11 +88,19 @@ const [src, bundle] = process.argv.slice(2);
 const p = JSON.parse(fs.readFileSync(src, 'utf8'));
 p['bundle-info']['bundle-name'] = bundle;
 p['bundle-info']['distribution-certificate'] = fs.readFileSync('app-leaf.pem', 'utf8');
+// apl / app-feature / ACL 决定这个包能不能静默安装别的应用。
+// normal 只能入队等 PC agent；system_core 才拿得到 INSTALL_BUNDLE。
+p['bundle-info']['apl'] = process.env.OHOS_APL || 'system_core';
+p['bundle-info']['app-feature'] = process.env.OHOS_APP_FEATURE || 'hos_system_app';
+const acls = (process.env.OHOS_ALLOWED_ACLS || '').split(/[, \t]+/).filter(Boolean);
+p.acls = { 'allowed-acls': acls };
 p['validity'] = { 'not-before': 1690000000, 'not-after': 2000000000 };
-p.acls = { 'allowed-acls': [] };
 fs.writeFileSync('appcenter-profile.json', JSON.stringify(p, null, 4));
 console.log('    bundle-name = ' + bundle +
-  '  not-after = ' + new Date(p.validity['not-after'] * 1000).toISOString().slice(0, 10));
+  '  apl = ' + p['bundle-info']['apl'] +
+  '  feature = ' + p['bundle-info']['app-feature'] +
+  '  acls = [' + acls.join(', ') + ']');
+console.log('    not-after = ' + new Date(p.validity['not-after'] * 1000).toISOString().slice(0, 10));
 NODE
 
 step "5/5 签名 Profile -> appcenter-profile.p7b"

@@ -3,26 +3,30 @@
 `com.local.appcenter`：给 LHT16（OpenHarmony 4.1.7.5 / API 11）做的一个**可离线、可审计**的应用分发闭环，
 用来替代已失联的厂商「分发中心」（`com.laval.dispatchcenter`）。
 
-三块：
+组成：
 
 | 目录 | 作用 |
 | --- | --- |
 | `store/` | HAP 仓库 + `index.json`（schema v1） |
-| `tools/` | 建索引、校验、局域网静态服务、工程结构自检 |
-| `app/` | 设备端 ArkTS 应用（浏览 / 下载 / SHA256 校验 / 入队） |
-| `agent/` | PC 侧 agent：`hdc` 拉取、复核哈希、`hdc install -r` |
+| `tools/` | 建索引、校验、发布前 HAP 验签、局域网静态服务、工程结构自检 |
+| `app/` | 设备端 ArkTS 应用（浏览 / 下载 / SHA256 校验 / **本机静默安装**） |
+| `agent/` | PC 侧 agent：`hdc` 拉取、复核哈希、`hdc install -r`（仅在 `normal` 兜底变体中使用） |
 | `scripts/` | 无 IDE 的构建/签名/部署链（doctor / build / sign / deploy） |
 
-**设备端不安装任何东西** —— 普通应用没有 `INSTALL_BUNDLE` 权限，装包必须由 PC 侧 agent 执行。
-这是设计前提，不是未完成项，原因见 [docs/DESIGN.md](docs/DESIGN.md)。
+商店客户端以 **`system_core`** 身份签名、持有 `ohos.permission.INSTALL_BUNDLE`，
+所以「点下载 → 设备自己装」，不需要电脑在场；整个安装发生在 `/data/app`，
+不碰系统分区。签名链、Profile 字段与排错见 [docs/SIGNING.md](docs/SIGNING.md)。
+只有按 `normal` 身份构建时才会退回「设备入队 + PC agent」的兜底路径。
 
-## 当前状态（2026-11-22，本机真机验证）
+## 当前状态（2026-11-23，本机真机验证）
 
 | 项 | 状态 |
 | --- | --- |
 | 索引构建 / 校验 | ✅ `node --test` 通过；`build-index` + `validate-index` 对 6 个应用通过 |
-| 设备端 ArkTS | ✅ 4.1 SDK 编译、自签、安装到 LHT16，列表/下载/校验/入队均已在板上跑通 |
-| PC agent | ✅ `--once` 真机安装 `homekiosk` 与 `media` 成功（含哈希复核） |
+| 设备端 ArkTS | ✅ 4.1 SDK 编译、`system_core` 自签、安装到 LHT16（`isSystemApp=true`，`INSTALL_BUNDLE` 已授予） |
+| 设备端静默安装 | ✅ 真机闭环：商店内点「下载」→ 校验 → 设备自行安装成功（homeime、browser），全程无 PC agent、无弹窗 |
+| 发布前验签 | ✅ `tools/verify-store-haps.sh` 对 6 个 HAP 全部通过（含 Profile 包名比对） |
+| PC agent | ✅ 兜底路径可用：`--once` 真机安装 `homekiosk` 与 `media` 成功（含哈希复核） |
 | `store/apps/` | ✅ 6 个应用：HomeKiosk、媒体、浏览器、快传、沐界输入法、网易云音乐 |
 | 构建 / 签名 / 部署脚本 | ✅ `scripts/` 一条命令链，不依赖 IDE |
 
@@ -50,11 +54,19 @@
 ```bash
 cd ohos-appcenter
 bash scripts/doctor.sh                 # 环境自检（SDK / hdc / hvigor / JDK / 签名材料）
-bash scripts/make-signing-material.sh  # 首次：为 com.local.appcenter 签发证书 + Profile
+bash scripts/make-signing-material.sh  # 首次/换机：为 com.local.appcenter 签发证书 + Profile
 bash scripts/build.sh                  # -> build-artifacts/entry-unsigned.hap
 bash scripts/sign.sh                   # -> build-artifacts/entry-signed.hap（verify 自检）
 OHOS_TARGET=<serial|IP:PORT> bash scripts/deploy.sh   # 安装 + 启动 + pidof + 截图 + hilog
 ```
+
+`scripts/env.sh` 默认按 `system_core` 签（`OHOS_APL` / `OHOS_APP_FEATURE` /
+`OHOS_ALLOWED_ACLS`），这样商店才能静默安装。改成 `OHOS_APL=normal` 后重跑
+`make-signing-material.sh` 即得到「入队 + PC agent」的普通应用变体，详见
+[docs/SIGNING.md](docs/SIGNING.md) §4。
+
+`deploy.sh` 先 `install -r` 覆盖安装（保留沙箱数据）；只有签名/Profile 变了导致覆盖
+失败时才卸载重装，并提示重新预置商店地址。
 
 工程同时能编 API 10 与 API 11：`$OHOS_BASE_SDK_HOME/openharmony` 是指向
 `openharmony-4.0-Release`（10）或 `openharmony-4.1-Release`（11）的 junction，
@@ -66,6 +78,7 @@ OHOS_TARGET=<serial|IP:PORT> bash scripts/deploy.sh   # 安装 + 启动 + pidof 
 
 ```bash
 cd ohos-appcenter
+bash tools/verify-store-haps.sh              # 发布前必做：验签 + Profile 包名比对
 node tools/build-index.mjs --store store --base-url http://192.168.31.100:8787
 node tools/validate-index.mjs --store store
 ```
@@ -81,6 +94,9 @@ store/apps/<bundleName>/<versionCode>/
 `meta.json` 必填 `name` / `summary` / `versionName`，其余可选；完整字段见
 [docs/INDEX-SPEC.md](docs/INDEX-SPEC.md)。把各仓 `build-artifacts/entry-signed.hap`
 复制进来再重建索引即可。
+
+> 换掉某个 HAP 后必须重建索引（`index.json` 里存的是旧包的 SHA256），且设备上要
+> **重启应用或点「刷新」** 才会拿到新索引，否则会显示「SHA256 不符，已丢弃」。
 
 ### 3. 局域网起服务
 
@@ -107,9 +123,18 @@ bash tools/dev-set-prefs.sh http://192.168.31.100:8787/index.json
 ```
 
 > 设备沙箱目录默认 `/data/app/el2/100/base/com.local.appcenter/haps/entry/files`。
-> 脚本以 root 推完文件后会 `chown -R 20010059:20010059`，否则应用会 `Permission denied`。
+> 沙箱 uid 由系统在安装时分配，**重装会变**；脚本会从 `files/` 的属主动态取 uid，
+> 再 `chown -R`，否则应用会 `Permission denied`。
 
-### 5. 装到设备
+### 5. 安装链路
+
+默认路径（`system_core` 变体）：用户点「下载」后，设备完成下载 + SHA256 校验，
+直接调用系统安装器安装，卡片变为「已安装 vX.Y.Z」。实现见
+`app/entry/src/main/ets/common/PrivilegedInstaller.ts`；安装策略是
+「直装 → `REPLACE_EXISTING` 重试 → 签名冲突才卸载重装」。
+
+兜底路径（`OHOS_APL=normal` 构建，或安装接口返回 `201`）：HAP 被放进
+`<filesDir>/appcenter/ready/`，由 PC agent 安装：
 
 ```bash
 node agent/pc-agent.mjs --once --serial <serial> \
@@ -124,6 +149,14 @@ node agent/pc-agent.mjs --interval 5
 若设备上已有**签名不同**的同包名版本（例如之前用调试证书装过），
 `install -r` 会返回 `9568332 sign info inconsistent`；agent 会自动卸掉重装。
 
+真机联调辅助（需要设备已授权调试、`uitest` 可用）：
+
+```bash
+bash tools/dev-tap.sh 0                       # 重启商店 -> 点第 1 个「下载/重试」-> 打印 hilog
+bash tools/dev-tap.sh 1 com.local.homeime     # 同时打印目标包的版本
+bash tools/dev-snap.sh out.jpeg               # 设备截图
+```
+
 
 ## 环境变量
 
@@ -137,6 +170,9 @@ node agent/pc-agent.mjs --interval 5
 | `DEVECO_HOME` | DevEco Studio 目录，只用它自带的 node |
 | `JAVA_HOME` / `OHOS_JDK` | 构建与签名用的 JDK 17 |
 | `OHOS_TARGET` | 设备 serial 或 `IP:PORT`，不设则用 hdc 报的第一个设备 |
+| `OHOS_APL` | Profile 的 `apl`，默认 `system_core`；设 `normal` 得到兜底变体 |
+| `OHOS_APP_FEATURE` | Profile 的 `app-feature`，默认 `hos_system_app` |
+| `OHOS_ALLOWED_ACLS` | Profile 的 `allowed-acls`，默认 `ohos.permission.INSTALL_BUNDLE` |
 
 `agent/pc-agent.mjs` 解析顺序：`--hdc` → `OHOS_HDC` → `OHOS_TOOLS` → PATH。
 `scripts/env.sh` 按同样顺序定位，并强制把 `NODE_PATH` 指向
@@ -147,6 +183,7 @@ node agent/pc-agent.mjs --interval 5
 ```bash
 node --test                                  # 全部单测
 node tools/check-app-json.mjs                # 工程结构自检（不编译）
+bash tools/verify-store-haps.sh              # 发布前验签 + Profile 包名比对
 node tools/build-index.mjs --store store --dry-run
 node tools/build-index.mjs --store store --base-url http://<PC-IP>:8787
 node tools/validate-index.mjs --store store
@@ -162,9 +199,9 @@ bash tools/dev-set-prefs.sh                  # 推预置地址并重启 + 截图
 app/
   AppScope/            bundleName = com.local.appcenter
   entry/src/main/ets/
-    common/            SettingsStore / StoreClient / ReadyQueue / Logger
+    common/            SettingsStore / StoreClient / ReadyQueue / PrivilegedInstaller / Logger
     model/Types.ets    与 index.json schema 一一对应
-    pages/             Index（列表+下载）、Settings（地址+PIN）
+    pages/             Index（列表+下载+安装）、Settings（地址+PIN）
     entryability/      EntryAbility
 scripts/               无 IDE 构建链：doctor / build / sign / deploy / 签名材料
 signing/               本机生成，git-ignored（p12 / cer / p7b）
@@ -175,14 +212,19 @@ tools/
   lib/index-lib.mjs    扫描/哈希/构建/校验（纯逻辑）
   build-index.mjs      生成 store/index.json
   validate-index.mjs   校验（含文件哈希）
+  verify-store-haps.sh 发布前验签 + Profile 包名比对
   serve.mjs            局域网静态服务（Range + 可选 PIN）
   check-app-json.mjs   json5 解析 + 页面/ability 路径存在性
   dev-set-prefs.sh     推预置商店地址 + 重启 + 截图（设备调试）
+  dev-tap.sh           重启商店 + 点第 N 个下载按钮 + 打印 hilog（设备调试）
+  dev-snap.sh          设备截图
+  click-bounds.mjs     从 uitest dumpLayout 结果里算按钮坐标
 agent/
   lib/agent-lib.mjs    ready 解析 / sha256 / 结果拼装
-  pc-agent.mjs         轮询 + hdc recv/install（签名冲突自动卸装）
+  pc-agent.mjs         轮询 + hdc recv/install（normal 兜底；签名冲突自动卸装）
 docs/
   DESIGN.md            架构、时序、安全、限制、里程碑
+  SIGNING.md           证书链、Profile 字段、特权安装与错误码
   INDEX-SPEC.md        schema v1 与不变量
 ```
 

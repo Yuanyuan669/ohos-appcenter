@@ -8,19 +8,22 @@ require_device
 
 [ -f "$OHOS_SIGNED_HAP" ] || fail "找不到 $OHOS_SIGNED_HAP。先跑 build.sh + sign.sh"
 
-step "卸载旧版本（忽略不存在的情况）"
-hdc_run uninstall "$OHOS_BUNDLE" >/dev/null 2>&1 && ok "removed $OHOS_BUNDLE" || warn "无需卸载（未安装过）"
-
-step "安装 HAP"
+step "安装 HAP（先覆盖安装，尽量保留沙箱数据）"
 # hdc on Windows mishandles some absolute paths; install from the file's directory.
 HAP_DIR="$(dirname "$OHOS_SIGNED_HAP")"; HAP_NAME="$(basename "$OHOS_SIGNED_HAP")"
-( cd "$HAP_DIR" && hdc_run install -r "$HAP_NAME" ) \
-  || fail "安装失败。按错误码排查：
+if ( cd "$HAP_DIR" && hdc_run install -r "$HAP_NAME" ); then
+  ok "installed（已保留沙箱数据）"
+else
+  warn "覆盖安装失败（多半是签名/Profile 变了），卸载后重装"
+  hdc_run uninstall "$OHOS_BUNDLE" >/dev/null 2>&1 && ok "removed $OHOS_BUNDLE" || warn "无需卸载"
+  ( cd "$HAP_DIR" && hdc_run install "$HAP_NAME" ) || fail "安装失败。按错误码排查：
      9568322/9568313 签名或 Profile 与设备/包名不匹配 -> docs/SIGNING.md
-     9568289 签名材料不成套
+     9568289 签名材料不成套，或 ACL 与 requestPermissions 对不上
      InstallFailed.*api version 应用要求的 API 高于设备 -> 改 build-profile.json5 的 compatibleSdkVersion
      [Fail]Connect  设备掉线 -> 重新 hdc tconn 或插拔 USB"
-ok "installed"
+  warn "沙箱已清空，需重新预置商店地址：bash tools/dev-set-prefs.sh"
+  ok "installed（全新）"
+fi
 
 step "启动 $OHOS_ABILITY"
 hdc_run shell "aa start -a $OHOS_ABILITY -b $OHOS_BUNDLE" || fail "启动失败：确认 module.json5 里的 ability 名与 OHOS_ABILITY=$OHOS_ABILITY 一致"
