@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-22T14:57:57.681Z",
+  "channel": "stable",
+  "minAppVersionCode": 1,
+  "baseUrl": "",
+  "mirrors": [
+    {
+      "id": "direct",
+      "name": "直连",
+      "template": ""
+    }
+  ],
+  "apps": []
+}

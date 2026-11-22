@@ -1,0 +1,18 @@
+# 构建产物
+app/build/
+app/.hvigor/
+app/oh_modules/
+app/local.properties
+
+# 签名材料（按各仓约定不入库）
+app/signing/*.p12
+app/signing/*.cer
+app/signing/*.p7b
+
+# agent 临时目录
+/tmp/
+
+# 系统
+.DS_Store
+Thumbs.db
+*.log

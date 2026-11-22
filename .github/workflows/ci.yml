@@ -1,0 +1,26 @@
+name: ohos-appcenter-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 单元测试
+        run: node --test
+      - name: 生成索引（store/apps 为空时生成空索引）
+        run: node tools/build-index.mjs --store store --base-url "${BASE_URL}"
+        env:
+          BASE_URL: ${{ vars.STORE_BASE_URL || '' }}
+      - name: 校验索引与 HAP 哈希
+        run: node tools/validate-index.mjs --store store
+      - name: 校验 app 工程可被 hvigor 识别（无 SDK 时只做 JSON 解析）
+        run: node tools/check-app-json.mjs

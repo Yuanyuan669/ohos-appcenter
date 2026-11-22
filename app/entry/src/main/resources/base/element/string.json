@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "App center module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "应用分发中心"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "应用中心"
+    }
+  ]
+}
