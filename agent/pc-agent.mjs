@@ -150,7 +150,10 @@ async function processReady(name) {
     installedAt: new Date().toISOString(),
   }));
 
-  const cleanup = await shell(`mkdir -p '${values.sandbox}/done' && mv '${remoteJson}' '${values.sandbox}/done/'`);
+  // 成功安装后把请求的 json 与 HAP 一起归档到 done/，避免 ready/ 无限增长。
+  const cleanup = await shell(
+    `mkdir -p '${values.sandbox}/done' && mv '${remoteJson}' '${values.sandbox}/done/'` +
+    ` && { mv '${remoteHap}' '${values.sandbox}/done/' 2>/dev/null || true; }`);
   if (cleanup.code !== 0) warn(`移动 ready 文件失败：${cleanup.stderr.trim()}`);
   return { ok: true };
 }
