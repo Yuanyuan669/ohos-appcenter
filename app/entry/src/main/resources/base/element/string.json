@@ -15,6 +15,10 @@
     {
       "name": "reason_install_bundle",
       "value": "从应用中心下载后在本机安装应用"
+    },
+    {
+      "name": "reason_get_bundle_info",
+      "value": "查询已安装应用的版本，在应用卡片上显示已安装/可更新"
     }
   ]
 }

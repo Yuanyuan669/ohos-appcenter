@@ -45,8 +45,10 @@ SDK 的 `toolchains/lib/` 里自带 `OpenHarmony.p12`（根/中间 CA 的私钥�
 | `appcenter-profile.p7b` | 用 Profile Release 密钥签过的 Profile |
 
 > 每个仓都有自己的 `signing/`，且**包名以仓库 `scripts/env.sh` 的 `OHOS_BUNDLE` 为准**。
-> 换包名或换机器时，必须重跑 `make-signing-material.sh`，否则会出现下文 §5 的
-> `17700011`。
+> 换包名或换机器时，必须重跑 `make-signing-material.sh`。
+> 只改 ACL / Profile 字段时脚本会复用已有密钥与证书（签名不变，`install -r` 可保留
+> 应用数据）；需要换密钥时设 `OHOS_SIGN_FORCE=1`，否则会出现下文 §5 的 `17700011` 变体
+> （同包名、不同证书，只能卸载重装）。
 
 ## 3. Profile 里起作用的字段
 
@@ -55,7 +57,7 @@ SDK 的 `toolchains/lib/` 里自带 `OpenHarmony.p12`（根/中间 CA 的私钥�
 | `bundle-info.bundle-name` | `com.local.appcenter` | 必须与 `AppScope/app.json5` 一致，否则设备拒装 |
 | `bundle-info.apl` | `system_core` | 决定系统权限上限；`normal` 拿不到安装权限 |
 | `bundle-info.app-feature` | `hos_system_app` | 声明为系统应用（`isSystemApp=true`） |
-| `acls.allowed-acls` | `["ohos.permission.INSTALL_BUNDLE"]` | 允许 Profile 授予该 ACL |
+| `acls.allowed-acls` | `["ohos.permission.INSTALL_BUNDLE", "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED"]` | 允许 Profile 授予静默安装 + 查询已装版本 |
 | `app-distribution-type` | `os_integration` | 自签/预置分发 |
 | `type` | `release` | 非调试 Profile |
 
@@ -64,18 +66,22 @@ SDK 的 `toolchains/lib/` 里自带 `OpenHarmony.p12`（根/中间 CA 的私钥�
 ```bash
 OHOS_APL=system_core
 OHOS_APP_FEATURE=hos_system_app
-OHOS_ALLOWED_ACLS=ohos.permission.INSTALL_BUNDLE
+OHOS_ALLOWED_ACLS=ohos.permission.INSTALL_BUNDLE,ohos.permission.GET_BUNDLE_INFO_PRIVILEGED
 ```
 
-`module.json5` 里也必须申请同一个权限，ACL 与 `requestPermissions` 对不上会报
+`module.json5` 里也必须申请同一组权限，ACL 与 `requestPermissions` 对不上会报
 `9568289`：
 
 ```json5
 "requestPermissions": [
   { "name": "ohos.permission.INTERNET" },
-  { "name": "ohos.permission.INSTALL_BUNDLE", "reason": "$string:reason_install_bundle" }
+  { "name": "ohos.permission.INSTALL_BUNDLE", "reason": "$string:reason_install_bundle" },
+  { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED", "reason": "$string:reason_get_bundle_info" }
 ]
 ```
+
+`GET_BUNDLE_INFO_PRIVILEGED` 只用于读已装应用的 `versionCode`/`versionName`，
+让卡片显示「已安装 / 更新」；它不影响安装，也不读写任何应用的数据。
 
 ## 4. 构建 normal 兜底变体
 
@@ -106,7 +112,7 @@ hdc shell bm dump -n com.local.appcenter | grep -A4 '"reqPermissionStates"'
 - `appPrivilegeLevel: system_core`
 - `isSystemApp: true`
 - `codePath: /data/app/...`（说明没动系统分区）
-- `reqPermissionStates` 里 `INSTALL_BUNDLE` 对应 `0`（`0` = granted）
+- `reqPermissionStates` 里 `INSTALL_BUNDLE`、`GET_BUNDLE_INFO_PRIVILEGED` 都对应 `0`（`0` = granted）
 
 ## 6. 发布前必须做的校验
 

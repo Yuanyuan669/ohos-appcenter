@@ -58,6 +58,12 @@ openssl x509 -in root-ca.cer -noout -subject | sed 's/^/    /'
 openssl x509 -in app-ca.cer -noout -subject | sed 's/^/    /'
 
 step "2/5 生成应用密钥对 -> appcenter.p12"
+# 默认复用已有密钥/证书：换 ACL、改 Profile 字段时不该换签名，
+# 否则已装的商店会被判定为「签名不一致」，只能卸载重装（应用数据会丢）。
+# 需要真正换密钥时设 OHOS_SIGN_FORCE=1。
+if [ -f appcenter.p12 ] && [ -f appcenter-app.cer ] && [ -z "${OHOS_SIGN_FORCE:-}" ]; then
+  ok "复用已有密钥与证书（OHOS_SIGN_FORCE=1 可强制重建）"
+else
 rm -f appcenter.p12
 sig generate-keypair -keyAlias "$APP_ALIAS" -keyPwd "$APP_PWD" \
   -keyAlg ECC -keySize NIST-P-256 \
@@ -76,6 +82,7 @@ sig generate-app-cert -keyAlias "$APP_ALIAS" -keyPwd "$APP_PWD" \
   -outForm certChain -rootCaCertFile root-ca.cer -subCaCertFile app-ca.cer \
   -outFile appcenter-app.cer \
   | grep -iE 'success|fail|error' || true
+fi
 [ -f appcenter-app.cer ] || fail "没有生成 appcenter-app.cer"
 ok "chain 有 $(grep -c 'BEGIN CERT' appcenter-app.cer) 张证书（leaf -> sub-CA -> root）"
 

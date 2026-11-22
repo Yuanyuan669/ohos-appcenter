@@ -84,6 +84,9 @@
    批量部署不必在板上手输地址。
 2. 设备：首页 `GET indexUrl?pin=…`（可选 PIN）。
    - 非 200 / 401 / `schemaVersion != 1` → 页面显示原文，不清空已有列表。
+   - 列表渲染后 `InstalledStore` 在后台逐项查 `getBundleInfo(bundleName, 0, 100)`：
+     已装且版本不低 → 卡片「已安装 vX」；已装但更低 → 「更新」；未装（错误码 `1`）
+     或没权限 → 保持「下载」。查询不阻塞渲染，也不影响安装。
 3. 用户点「下载」：
    - `StoreClient.resolveHapUrl` 用 `index.baseUrl`，为空则取 `indexUrl` 同目录。
    - `@ohos.request.downloadFile` 下载到 `<filesDir>/appcenter/cache/<bundle>-<versionCode>.hap`，
@@ -176,8 +179,10 @@ OHOS_TARGET=<serial> bash scripts/deploy.sh
   合法 `bundleName`、正整数 `versionCode`、64 位小写 SHA256、`.hap` 文件名（取 basename，
   不接受路径穿越）。
 - 服务：`serve.mjs` 只允许 GET/HEAD，路径拼接前先拒绝 `..`，可选 PIN 门。
-- 权限：商店只申请 `INTERNET` + `INSTALL_BUNDLE`。后者是 `system_core` Profile 显式授予的
-  ACL，且只用于安装「索引里声明了 SHA256 且设备侧校验通过」的 HAP；不申请读写他人沙箱。
+- 权限：商店申请 `INTERNET` + `INSTALL_BUNDLE` + `GET_BUNDLE_INFO_PRIVILEGED`。后两者是
+  `system_core` Profile 显式授予的 ACL：安装权限只用于装「索引里声明了 SHA256 且设备侧
+  校验通过」的 HAP；查询权限只读 `versionCode`/`versionName`，用来在卡片上显示
+  「已安装 / 更新」。不申请读写他人沙箱。
 - 发布：`tools/verify-store-haps.sh` 在入索引前逐个验签并比对 Profile 包名，
   防止「签名链有效但包名错」的包进店（它会导致设备端 `17700011`）。
 
@@ -199,7 +204,9 @@ OHOS_TARGET=<serial> bash scripts/deploy.sh
   `bm install` 直接接受，`bm dump` 显示 `isSystemApp=true`、`INSTALL_BUNDLE` granted，
   且 codePath 在 `/data/app`（不需要动系统分区）。
 - 公开 SDK 的 `ets/api` 裁掉了 `@ohos.bundle.installer` 的 `d.ts`，只能按 NAPI 模块
-  `bundle.installer` 动态加载（`.ts` + `@ts-ignore`）。
+  `bundle.installer` 动态加载（`.ts` + `@ts-ignore`）。同理 `bundleManager.getBundleInfo`
+  （查别的包）只留了 `getBundleInfoForSelf`，也要 `.ts` + ts-ignore；查不到的包返回错误码
+  `1`，按「未安装」处理即可。
 - **包名错误是真实的坑**：各仓 `scripts/env.sh` 的默认 `OHOS_BUNDLE` 曾出现串写
   （`ohos-browser` 写成 `com.local.transfer`，`OhMyBili` 写成 `com.local.homeime`），
   签出来的 HAP 内嵌 Profile 包名对不上，设备一律报 `17700011`。所以发布前必须跑
@@ -230,8 +237,11 @@ OHOS_TARGET=<serial> bash scripts/deploy.sh
 
 1. 替换占位图标，补 `icon`/截图字段；`meta.json` 已留位。
 2. 索引与 HAP 增加 `signature`（解析签名链、固定 issuer/fingerprint），替代「只信 SHA256」。
-3. 卡片加载时查询已装版本（`bundleManager.getBundleInfoForSelf` 只能查自己；
-   查别的包需 `GET_BUNDLE_INFO_PRIVILEGED`，要同步加 ACL），显示「已安装 / 可更新」。
-4. 镜像回退（`mirrors` 模板）与断点续传（`serve.mjs` 已支持 Range）。
-5. 自动构建：把各仓 `build-artifacts/entry-signed.hap` 收集到 `store/apps/`，
+3. 镜像回退（`mirrors` 模板）与断点续传（`serve.mjs` 已支持 Range）。
+4. 自动构建：把各仓 `build-artifacts/entry-signed.hap` 收集到 `store/apps/`，
    跑 `tools/verify-store-haps.sh`，再重建索引。
+
+已完成：卡片加载时查询已装版本。`bundleManager.getBundleInfoForSelf` 只能查自己，
+查别的包要用 `bundleManager.getBundleInfo(bundleName, 0, 100)`（systemapi，公开 SDK
+无 d.ts），并在 Profile 里加 `GET_BUNDLE_INFO_PRIVILEGED` ACL。实现见
+`app/entry/src/main/ets/common/InstalledStore.ts`；查不到就保持「下载」，不影响安装。

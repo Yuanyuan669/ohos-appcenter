@@ -74,7 +74,7 @@ export OHOS_KEY_PWD="${OHOS_KEY_PWD:-123456}"
 # the app hands downloaded HAPs to agent/pc-agent.mjs instead.
 export OHOS_APL="${OHOS_APL:-system_core}"
 export OHOS_APP_FEATURE="${OHOS_APP_FEATURE:-hos_system_app}"
-export OHOS_ALLOWED_ACLS="${OHOS_ALLOWED_ACLS:-ohos.permission.INSTALL_BUNDLE}"
+export OHOS_ALLOWED_ACLS="${OHOS_ALLOWED_ACLS:-ohos.permission.INSTALL_BUNDLE,ohos.permission.GET_BUNDLE_INFO_PRIVILEGED}"
 
 # --- Output -----------------------------------------------------------------
 export OHOS_OUT_DIR="${OHOS_OUT_DIR:-$OHOS_PROJECT_ROOT/build-artifacts}"

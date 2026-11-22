@@ -24,7 +24,8 @@
 | --- | --- |
 | 索引构建 / 校验 | ✅ `node --test` 通过；`build-index` + `validate-index` 对 6 个应用通过 |
 | 设备端 ArkTS | ✅ 4.1 SDK 编译、`system_core` 自签、安装到 LHT16（`isSystemApp=true`，`INSTALL_BUNDLE` 已授予） |
-| 设备端静默安装 | ✅ 真机闭环：商店内点「下载」→ 校验 → 设备自行安装成功（homeime、browser），全程无 PC agent、无弹窗 |
+| 设备端静默安装 | ✅ 真机闭环：商店内点「下载」→ 校验 → 设备自行安装成功（homeime、browser、transfer、music），全程无 PC agent、无弹窗 |
+| 已安装状态 | ✅ 列表加载后在后台探测设备版本（`GET_BUNDLE_INFO_PRIVILEGED`），卡片显示「已安装 vX.Y.Z」/「更新」；卸载后刷新即恢复「下载」 |
 | 发布前验签 | ✅ `tools/verify-store-haps.sh` 对 6 个 HAP 全部通过（含 Profile 包名比对） |
 | PC agent | ✅ 兜底路径可用：`--once` 真机安装 `homekiosk` 与 `media` 成功（含哈希复核） |
 | `store/apps/` | ✅ 6 个应用：HomeKiosk、媒体、浏览器、快传、沐界输入法、网易云音乐 |
@@ -67,6 +68,10 @@ OHOS_TARGET=<serial|IP:PORT> bash scripts/deploy.sh   # 安装 + 启动 + pidof 
 
 `deploy.sh` 先 `install -r` 覆盖安装（保留沙箱数据）；只有签名/Profile 变了导致覆盖
 失败时才卸载重装，并提示重新预置商店地址。
+
+`make-signing-material.sh` 默认**复用已有 `appcenter.p12` / `appcenter-app.cer`**，
+只重写 Profile —— 换 ACL 或改其他 Profile 字段时不会换掉签名，已装的商店用
+`install -r` 升级即可保留数据。真要换密钥时设 `OHOS_SIGN_FORCE=1`。
 
 工程同时能编 API 10 与 API 11：`$OHOS_BASE_SDK_HOME/openharmony` 是指向
 `openharmony-4.0-Release`（10）或 `openharmony-4.1-Release`（11）的 junction，
@@ -133,6 +138,11 @@ bash tools/dev-set-prefs.sh http://192.168.31.100:8787/index.json
 `app/entry/src/main/ets/common/PrivilegedInstaller.ts`；安装策略是
 「直装 → `REPLACE_EXISTING` 重试 → 签名冲突才卸载重装」。
 
+列表加载时还会异步查询每个应用的已装版本（`InstalledStore.ts`，走
+`bundleManager.getBundleInfo(bundleName, 0, 100)`，需要 `GET_BUNDLE_INFO_PRIVILEGED`），
+于是重启商店后已装应用直接显示「已安装 vX.Y.Z」，比索引新版本低的显示「更新」。
+查不到（权限缺失或系统接口不可用）就保持「下载」，不影响安装。
+
 兜底路径（`OHOS_APL=normal` 构建，或安装接口返回 `201`）：HAP 被放进
 `<filesDir>/appcenter/ready/`，由 PC agent 安装：
 
@@ -154,7 +164,8 @@ node agent/pc-agent.mjs --interval 5
 ```bash
 bash tools/dev-tap.sh 0                       # 重启商店 -> 点第 1 个「下载/重试」-> 打印 hilog
 bash tools/dev-tap.sh 1 com.local.homeime     # 同时打印目标包的版本
-bash tools/dev-snap.sh out.jpeg               # 设备截图
+bash tools/dev-snap.sh out.jpeg               # 设备截图（只唤醒）
+bash tools/dev-snap.sh out.jpeg --unlock      # 锁屏时先上滑解锁
 ```
 
 
@@ -172,7 +183,8 @@ bash tools/dev-snap.sh out.jpeg               # 设备截图
 | `OHOS_TARGET` | 设备 serial 或 `IP:PORT`，不设则用 hdc 报的第一个设备 |
 | `OHOS_APL` | Profile 的 `apl`，默认 `system_core`；设 `normal` 得到兜底变体 |
 | `OHOS_APP_FEATURE` | Profile 的 `app-feature`，默认 `hos_system_app` |
-| `OHOS_ALLOWED_ACLS` | Profile 的 `allowed-acls`，默认 `ohos.permission.INSTALL_BUNDLE` |
+| `OHOS_ALLOWED_ACLS` | Profile 的 `allowed-acls`，默认 `ohos.permission.INSTALL_BUNDLE,ohos.permission.GET_BUNDLE_INFO_PRIVILEGED` |
+| `OHOS_SIGN_FORCE` | 设 `1` 时强制重建密钥/证书；默认复用已有签名材料（避免换签名导致重装丢数据） |
 
 `agent/pc-agent.mjs` 解析顺序：`--hdc` → `OHOS_HDC` → `OHOS_TOOLS` → PATH。
 `scripts/env.sh` 按同样顺序定位，并强制把 `NODE_PATH` 指向

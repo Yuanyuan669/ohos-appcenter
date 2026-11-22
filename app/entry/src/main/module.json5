@@ -43,6 +43,12 @@
         // 拿到它，见 scripts/make-signing-material.sh 里的 OHOS_APL/OHOS_ALLOWED_ACLS。
         "name": "ohos.permission.INSTALL_BUNDLE",
         "reason": "$string:reason_install_bundle"
+      },
+      {
+        // 读取其它应用的版本信息，用来在卡片上显示「已安装 / 更新」。
+        // 拿不到也只是退化为「下载」，不影响安装。
+        "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "reason": "$string:reason_get_bundle_info"
       }
     ]
   }

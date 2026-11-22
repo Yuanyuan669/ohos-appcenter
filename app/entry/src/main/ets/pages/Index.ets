@@ -6,10 +6,12 @@ import { SettingsStore } from '../common/SettingsStore';
 import { StoreClient, StoreError } from '../common/StoreClient';
 import { ReadyQueue, hapFileName } from '../common/ReadyQueue';
 import { PrivilegedInstaller, ERR_NO_PERMISSION } from '../common/PrivilegedInstaller';
+import { InstalledStore, InstalledVersion } from '../common/InstalledStore';
 
 interface CardState {
   bundleName: string;
-  phase: string; // idle | downloading | installing | ready | installed | failed
+  /** idle | downloading | installing | ready | installed（同版本已装） | update（已装旧版） | failed */
+  phase: string;
   detail: string;
 }
 
@@ -56,6 +58,8 @@ struct Index {
         return s;
       });
       StoreClient.logInfo('index loaded: ' + index.apps.length);
+      // 不阻塞列表渲染：先在后台探测设备上已装的版本，再逐张卡片更新。
+      this.refreshInstalled();
     } catch (e) {
       const err = e as Error;
       this.errorText = err instanceof StoreError ? err.message : ('加载失败：' + err.message);
@@ -83,6 +87,31 @@ struct Index {
       return changed;
     });
     this.states = next;
+  }
+
+  /**
+   * 探测每个应用在设备上的版本，把卡片从「下载」改成「已安装 / 更新」。
+   * 查询走 InstalledStore（GET_BUNDLE_INFO_PRIVILEGED）；拿不到权限时保持 idle。
+   * 只在 idle/installed/update 时覆盖，避免打断正在进行的下载/安装。
+   */
+  private async refreshInstalled(): Promise<void> {
+    const apps = this.apps;
+    for (const app of apps) {
+      const installed: InstalledVersion | null = await InstalledStore.get(app.bundleName);
+      if (installed === null) {
+        continue;
+      }
+      const current = this.stateOf(app.bundleName);
+      if (current.phase !== 'idle' && current.phase !== 'installed' && current.phase !== 'update') {
+        continue;
+      }
+      if (installed.versionCode >= app.latest.versionCode) {
+        this.updateState(app.bundleName, 'installed', '已安装 v' + installed.versionName);
+      } else {
+        this.updateState(app.bundleName, 'update',
+          '已安装 v' + installed.versionName + '，可更新到 v' + app.latest.versionName);
+      }
+    }
   }
 
   async install(app: AppEntry): Promise<void> {
@@ -191,7 +220,9 @@ struct Index {
           .fontSize(13).height(30)
           .backgroundColor(this.stateOf(app.bundleName).phase === 'installed' ? '#214D3B' : '#21455C')
           .fontColor('#EAF4FF')
-          .enabled(this.stateOf(app.bundleName).phase === 'idle' || this.stateOf(app.bundleName).phase === 'failed')
+          .enabled(this.stateOf(app.bundleName).phase === 'idle'
+            || this.stateOf(app.bundleName).phase === 'failed'
+            || this.stateOf(app.bundleName).phase === 'update')
           .onClick(() => { this.install(app); })
       }
       .width('100%')
@@ -252,6 +283,9 @@ function phaseText(phase: string): string {
   }
   if (phase === 'installed') {
     return '已安装';
+  }
+  if (phase === 'update') {
+    return '更新';
   }
   if (phase === 'failed') {
     return '重试';
